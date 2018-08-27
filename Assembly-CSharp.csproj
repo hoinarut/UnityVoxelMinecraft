@@ -57,6 +57,7 @@
      <Compile Include="Assets\BlockInteraction.cs" />
      <Compile Include="Assets\CameraController.cs" />
      <Compile Include="Assets\Chunk.cs" />
+     <Compile Include="Assets\ChunkMB.cs" />
      <Compile Include="Assets\ConcurrentDictionary.cs" />
      <Compile Include="Assets\CoroutineQueue.cs" />
      <Compile Include="Assets\Utils.cs" />
