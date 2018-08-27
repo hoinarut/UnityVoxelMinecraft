@@ -1,4 +1,5 @@
 ﻿using Realtime.Messaging.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,15 +10,17 @@ public class World : MonoBehaviour
 
     public GameObject player;
     public Material textureAtlas;
+    public Material fluidTexture;
     public static int columnHeight = 16;
     public static int chunkSize = 16;
     public static int worldSize = 1;
-    public static int radius = 4;
+    public static int radius = 2;
     public static ConcurrentDictionary<string, Chunk> chunks;
     public static bool firstbuild = true;
     public static List<string> toRemove = new List<string>();
 
-    CoroutineQueue queue;
+    float startTime;
+    public static CoroutineQueue queue;
     public static uint maxCoroutines = 1000;
 
     public Vector3 lastBuildPos;
@@ -27,6 +30,11 @@ public class World : MonoBehaviour
         return (int)v.x + "_" +
                      (int)v.y + "_" +
                      (int)v.z;
+    }
+
+    public static string BuildColumnName(Vector3 v)
+    {
+        return (int)v.x + "_" + (int)v.z;
     }
 
     void BuildChunkAt(int x, int y, int z)
@@ -40,8 +48,9 @@ public class World : MonoBehaviour
 
         if (!chunks.TryGetValue(n, out c))
         {
-            c = new Chunk(chunkPosition, textureAtlas);
+            c = new Chunk(chunkPosition, textureAtlas, fluidTexture);
             c.chunk.transform.parent = this.transform;
+            c.fluid.transform.parent = this.transform;
             chunks.TryAdd(c.chunk.name, c);
         }
 
@@ -121,6 +130,51 @@ public class World : MonoBehaviour
             (int)player.transform.position.y / chunkSize,
             (int)player.transform.position.z / chunkSize,
             radius));
+    }
+
+    public static Block GetWorldBlock(Vector3 pos)
+    {
+        int cx, cy, cz;
+
+        if (pos.x < 0)
+        {
+            cx = (int)(Mathf.Round(pos.x - chunkSize) / (float)chunkSize) * chunkSize;
+        }
+        else
+        {
+            cx = (int)(Mathf.Round(pos.x) / (float)chunkSize) * chunkSize;
+        }
+        if (pos.y < 0)
+        {
+            cy = (int)(Mathf.Round(pos.y - chunkSize) / (float)chunkSize) * chunkSize;
+        }
+        else
+        {
+            cy = (int)(Mathf.Round(pos.y) / (float)chunkSize) * chunkSize;
+        }
+        if (pos.z < 0)
+        {
+            cz = (int)(Mathf.Round(pos.z - chunkSize) / (float)chunkSize) * chunkSize;
+        }
+        else
+        {
+            cz = (int)(Mathf.Round(pos.z) / (float)chunkSize) * chunkSize;
+        }
+
+        var blx = (int)Mathf.Abs((float)Math.Round(pos.x) - cx);
+        var bly = (int)Mathf.Abs((float)Math.Round(pos.y) - cy);
+        var blz = (int)Mathf.Abs((float)Math.Round(pos.z) - cz);
+        var cn = BuildChunkName(new Vector3(cx, cy, cz));
+
+        Chunk c;
+        if (chunks.TryGetValue(cn, out c))
+        {
+            return c.chunkData[blx, bly, blz];
+        }
+        else
+        {
+            return null;
+        }
     }
 
     // Use this for initialization
